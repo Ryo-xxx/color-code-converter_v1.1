@@ -44,7 +44,7 @@ function parseHexa(str) {
     r = parseInt(s.slice(1, 3), 16);
     g = parseInt(s.slice(3, 5), 16);
     b = parseInt(s.slice(5, 7), 16);
-    if (s.length === 9) a = parseInt(s.slice(7, 9), 16) / 255; // RRGGBBAA形式
+    if (s.length === 9) a = parseInt(s.slice(7, 9), 16) / 255; // RRGGBBAA
   }
   return { r, g, b, a };
 }
@@ -52,12 +52,12 @@ function parseHexa(str) {
 function toHex6(r, g, b) { return `#${toHex2(r)}${toHex2(g)}${toHex2(b)}`; }
 function toHexa(r, g, b, a) { return `#${toHex2(r)}${toHex2(g)}${toHex2(b)}${toHexA(a)}`; }
 
-// ★ FIX: B が G になっていたバグを修正
+// FIX: b が g になってたバグを修正済み
 function toRgba(r, g, b, a) {
   const rr = Math.round(r);
   const gg = Math.round(g);
   const bb = Math.round(b);
-  const aa = Math.round(a * 100) / 100; // 0.01刻み
+  const aa = Math.round(a * 100) / 100;
   return `rgba(${rr}, ${gg}, ${bb}, ${aa})`;
 }
 
@@ -67,8 +67,10 @@ function setRGBA(r, g, b, a, from) {
 }
 
 function render(from) {
-  // swatch
-  swatch.style.backgroundColor = toRgba(state.r, state.g, state.b, state.a);
+  // ★ ここを backgroundColor -> background にして画像レイヤーを消す
+  const rgba = toRgba(state.r, state.g, state.b, state.a);
+  swatch.style.background = rgba;                  // 背景画像ごと上書き
+  swatch.style.backgroundImage = 'none';           // 念のため明示
 
   // fields
   if (from !== 'hex6') hex6.value = toHex6(state.r, state.g, state.b);
@@ -82,10 +84,9 @@ function render(from) {
   }
 
   // preview text color
-  const rgba = toRgba(state.r, state.g, state.b, state.a);
   document.querySelectorAll('.preview-text').forEach(el => el.style.color = rgba);
 
-  // コピーテキスト
+  // コピー用コード
   if (cssVarCode) {
     const isOpaque = state.a >= 1;
     const value = isOpaque
@@ -102,7 +103,7 @@ async function copyTextSafe(text) {
       await navigator.clipboard.writeText(text);
       return true;
     }
-  } catch (_) {}
+  } catch {}
   const ta = document.createElement('textarea');
   ta.value = text;
   ta.style.position = 'fixed';
@@ -115,7 +116,7 @@ async function copyTextSafe(text) {
     const ok = document.execCommand('copy');
     document.body.removeChild(ta);
     return ok;
-  } catch (_) {
+  } catch {
     document.body.removeChild(ta);
     return false;
   }
@@ -153,8 +154,9 @@ picker.addEventListener('input', () => {
 
 pickerA.addEventListener('input', () => {
   const a = clamp(parseFloat(pickerA.value || '0'), 0, 1);
-  pickerAOut.textContent = String(Math.round(a * 100) / 100);
-  setRGBA(state.r, state.g, state.b, a, 'picker');
+  const aa = Math.round(a * 100) / 100;
+  pickerAOut.textContent = String(aa);
+  setRGBA(state.r, state.g, state.b, aa, 'picker');
 });
 
 // === Name preview handlers ===
