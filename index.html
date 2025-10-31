@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>カラーコード変換 | Open Source</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="container">
+    <h1>カラーコード変換</h1>
+    <p class="sub">HEXA ⇄ RGBA / CMYKA / HSVA / HSLA / HWBA<br>リアルタイム変換とプレビューができます。</p>
+  </header>
+
+  <main class="container grid">
+    <section class="card">
+      <h2>現在の色</h2>
+      <div id="swatch" class="swatch"></div>
+
+      <div class="row">
+        <label for="hex6">HEX</label>
+        <div class="input-copy">
+          <input id="hex6" type="text" value="#000000" spellcheck="false" />
+          <button class="copy-btn" data-copy="#hex6" aria-label="コピー">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+        </div>
+        <div></div>
+      </div>
+
+      <div class="row">
+        <label for="hex">HEXA</label>
+        <div class="input-copy">
+          <input id="hex" type="text" value="#000000ff" spellcheck="false" />
+          <button class="copy-btn" data-copy="#hex" aria-label="コピー">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+        </div>
+        <div></div>
+      </div>
+
+      <div class="row alpha-row">
+        <label for="picker">HEX ピッカー</label>
+        <div class="picker-wrap">
+          <input id="picker" type="color" value="#000000" />
+          <div class="alpha-control">
+            <input id="pickerA" type="range" min="0" max="1" step="0.01" value="1" />
+            <output id="pickerAOut">1</output>
+            <label for="pickerA" class="alpha-label">(透明度)</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Discord 連携ボタン行（追加） -->
+      <div class="row">
+        <label>Discord連携</label>
+        <div>
+          <button id="apply-to-discord" class="apply-btn" type="button" disabled>🎨 Discordへ適用</button>
+          <small id="apply-status" class="muted" style="display:block;margin-top:6px;"></small>
+        </div>
+        <div></div>
+      </div>
+    </section>
+  </main>
+
+  <section class="container">
+    <div class="card">
+      <h2>文字色プレビュー</h2>
+      <div class="row">
+        <label for="nameText">表示する文字</label>
+        <input id="nameText" type="text" value="Sample" maxlength="32" />
+        <button id="nameReset" type="button">リセット</button>
+      </div>
+
+      <div class="preview-grid four-tiles" aria-label="背景別プレビュー">
+        <div class="preview-card bg-white2"><div class="preview-inner"><span class="preview-text">Sample</span><div class="preview-meta">背景: ホワイト</div></div></div>
+        <div class="preview-card bg-ash"><div class="preview-inner"><span class="preview-text">Sample</span><div class="preview-meta">背景: アッシュ</div></div></div>
+        <div class="preview-card bg-dark"><div class="preview-inner"><span class="preview-text">Sample</span><div class="preview-meta">背景: ダーク</div></div></div>
+        <div class="preview-card bg-onyx"><div class="preview-inner"><span class="preview-text">Sample</span><div class="preview-meta">背景: ブラック</div></div></div>
+      </div>
+
+      <div class="copyrow">
+        <code>color: <span id="cssVarCode">rgba(0, 0, 0, 1)</span>;</code>
+        <button data-copy-text="#cssVarCode">コピー</button>
+      </div>
+
+      <p class="note">【使い方】<br>HEXピッカーから好きな色を決めてカラーコードをコピーするだけの簡単操作！<br>文字色プレビューで表示したい文字を入力すると4色の背景にプレビューが表示されます。<br>色が決まったら➡Discordへ適用</p>
+    </div>
+  </section>
+
+  <footer class="container">
+    <p>MIT License. © 2025 Color code converter</p>
+  </footer>
+
+  <script src="./main.js"></script>
+
+  <!-- Discord連携スクリプト（追加）：main.jsの後に置く -->
+  <script>
+  (() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get('t');
+
+    const btn = document.getElementById('apply-to-discord');
+    const status = document.getElementById('apply-status');
+
+    // TODO: Render等で公開しているボットのエンドポイントURLに置き換えてください
+    const ENDPOINT = 'https://YOUR-ENDPOINT-DOMAIN/apply'; // 例: https://ryo-color-bot.onrender.com/apply
+
+    const getHex6 = () => {
+      const el = document.querySelector('#hex6');
+      return (el?.value || '').trim();
+    };
+
+    if (token) {
+      btn.disabled = false;
+      status.textContent = 'トークンOK：色を選んで「Discordへ適用」を押してね。';
+    } else {
+      btn.disabled = true;
+      status.textContent = 'トークンがありません（Discordで /color_web から開いてね）';
+    }
+
+    btn?.addEventListener('click', async () => {
+      const hex6 = getHex6();
+      if (!/^#?[0-9a-fA-F]{6}$/.test(hex6)) {
+        status.textContent = 'HEX(6桁)が不正っぽいよ。';
+        return;
+      }
+      try {
+        btn.disabled = true;
+        status.textContent = '送信中…';
+
+        const res = await fetch(ENDPOINT, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ t: token, hex: hex6 })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          status.textContent = '✅ 反映完了！Discord側で色が変わるのを確認してね。';
+        } else {
+          status.textContent = '❌ エラー: ' + (data.msg || 'unknown');
+        }
+      } catch (e) {
+        status.textContent = '❌ 通信エラー: ' + e;
+      } finally {
+        if (token) btn.disabled = false;
+      }
+    });
+  })();
+  </script>
+</body>
+</html>
